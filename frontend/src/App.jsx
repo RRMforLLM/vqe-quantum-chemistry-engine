@@ -1,32 +1,31 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid,
+  LineChart, Line, XAxis, YAxis,
   Tooltip, ReferenceLine, ResponsiveContainer,
   BarChart, Bar, Cell,
 } from "recharts";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Design tokens
+// Design tokens (Clean Academia)
 // ─────────────────────────────────────────────────────────────────────────────
 const C = {
-  bg:       "#070b12",
-  surface:  "#0d1520",
-  border:   "#1a2740",
-  blue:     "#38bdf8",
-  blueDim:  "#0e4a6e",
-  orange:   "#fb923c",
-  orangeDim:"#5c2a0d",
-  green:    "#34d399",
-  muted:    "#4a6080",
-  text:     "#cdd9e8",
-  textDim:  "#6b8aaa",
+  bg:         "#f8fafc",    // light slate-50
+  surface:    "#ffffff",    // white
+  border:     "#e2e8f0",    // slate-200
+  accent:     "#0f766e",    // teal-700 (soft teal)
+  accentDim:  "#ccfbf1",    // teal-50
+  muted:      "#cbd5e1",    // slate-300
+  text:       "#334155",    // slate-700
+  textDim:    "#64748b",    // slate-500
+  textStrong: "#0f172a",    // slate-900
+  green:      "#059669",    // emerald-600
 };
 
 const BITSTRINGS = [
-  "|0000⟩","|0101⟩","|1010⟩","|0011⟩","|1100⟩","|0110⟩",
-  "|1001⟩","|1111⟩","|0001⟩","|1110⟩","|0111⟩","|1011⟩",
-  "|1101⟩","|0010⟩","|1000⟩","|0100⟩",
+  "0000","0101","1010","0011","1100","0110",
+  "1001","1111","0001","1110","0111","1011",
+  "1101","0010","1000","0100",
 ];
 
 const REFERENCE_E = -75.97;
@@ -38,122 +37,114 @@ const API         = "http://localhost:8000";
 const panelStyle = {
   background:   C.surface,
   border:       `1px solid ${C.border}`,
-  borderRadius: 12,
-  padding:      "20px 24px",
+  borderRadius: 8,
+  padding:      "24px",
+  boxShadow:    "0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)",
 };
 
 const labelStyle = {
-  fontSize:      10,
-  letterSpacing: "0.18em",
+  fontSize:      11,
+  fontWeight:    600,
+  letterSpacing: "0.05em",
   textTransform: "uppercase",
   color:         C.textDim,
-  marginBottom:  10,
-  fontFamily:    "'JetBrains Mono', 'Fira Code', monospace",
+  marginBottom:  16,
+  fontFamily:    "Inter, system-ui, sans-serif",
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Component A — DescentTrace (live recharts line)
+// Component 1 — EnergyConvergence
 // ─────────────────────────────────────────────────────────────────────────────
-function DescentTrace({ data, converged }) {
+function EnergyConvergence({ data, converged }) {
   const chartData = data.map((d, i) => ({ step: i, energy: d.energy, best: d.best_energy }));
 
   return (
     <div style={panelStyle}>
-      <div style={labelStyle}>SPSA Descent — Energy vs Step</div>
-      <ResponsiveContainer width="100%" height={220}>
-        <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: -10 }}>
-          <CartesianGrid stroke={C.border} strokeDasharray="3 3" />
-          <XAxis dataKey="step" stroke={C.muted} tick={{ fill: C.textDim, fontSize: 10 }}
-                 label={{ value: "Step", position: "insideBottomRight", offset: -4, fill: C.muted, fontSize: 10 }} />
-          <YAxis stroke={C.muted} tick={{ fill: C.textDim, fontSize: 10 }}
+      <div style={labelStyle}>Energy Convergence vs Step</div>
+      <ResponsiveContainer width="100%" height={260}>
+        <LineChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: -10 }}>
+          <XAxis dataKey="step" stroke={C.muted} tick={{ fill: C.textDim, fontSize: 11 }} tickLine={false} axisLine={false}
+                 label={{ value: "Step", position: "insideBottomRight", offset: -5, fill: C.textDim, fontSize: 11 }} />
+          <YAxis stroke={C.muted} tick={{ fill: C.textDim, fontSize: 11 }} tickLine={false} axisLine={false}
                  tickFormatter={v => v.toFixed(3)} domain={["auto", "auto"]} />
           <Tooltip
-            contentStyle={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8 }}
-            labelStyle={{ color: C.textDim, fontSize: 10 }}
-            itemStyle={{ fontSize: 11 }}
+            contentStyle={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.05)" }}
+            labelStyle={{ color: C.textDim, fontSize: 11 }}
+            itemStyle={{ fontSize: 12, fontWeight: 500 }}
             formatter={(v, n) => [v.toFixed(6) + " Ha", n === "energy" ? "Current" : "Best"]}
           />
           <ReferenceLine y={REFERENCE_E}
-            stroke={C.green} strokeDasharray="5 3" strokeWidth={1.5}
-            label={{ value: `${REFERENCE_E} Ha`, fill: C.green, fontSize: 10, position: "insideTopLeft" }} />
-          {/* raw trace — faint */}
-          <Line type="monotone" dataKey="energy" dot={false} strokeWidth={1}
-                stroke={C.blue} strokeOpacity={0.35} isAnimationActive={false} />
-          {/* best envelope — vivid */}
-          <Line type="monotone" dataKey="best" dot={false} strokeWidth={2}
-                stroke={converged ? C.green : C.blue} isAnimationActive={false} />
+            stroke={C.muted} strokeDasharray="4 4" strokeWidth={1}
+            label={{ value: `Reference: ${REFERENCE_E} Ha`, fill: C.textDim, fontSize: 11, position: "insideTopLeft" }} />
+          <Line type="monotone" dataKey="energy" dot={false} strokeWidth={1.5}
+                stroke={C.accent} strokeOpacity={0.4} isAnimationActive={false} />
+          <Line type="monotone" dataKey="best" dot={false} strokeWidth={2.5}
+                stroke={converged ? C.green : C.accent} isAnimationActive={false} />
         </LineChart>
       </ResponsiveContainer>
 
-      {converged && (
-        <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-          style={{ marginTop: 10, padding: "8px 14px", background: "#052015",
-                   border: `1px solid ${C.green}`, borderRadius: 8,
-                   color: C.green, fontSize: 11, fontFamily: "monospace", letterSpacing: "0.05em" }}>
-          ✓ CONVERGED — early stopping triggered
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {converged && (
+          <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}
+            style={{ marginTop: 16, padding: "10px 16px", background: "#f0fdf4",
+                     border: `1px solid #bbf7d0`, borderRadius: 6,
+                     color: C.green, fontSize: 12, fontWeight: 500 }}>
+            ✓ Converged (Early stopping triggered)
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Component B — ParameterAnsatz (36-node HEA grid)
+// Component 2 — OptimizerGrid
 // ─────────────────────────────────────────────────────────────────────────────
-function ParameterAnsatz({ params, converged }) {
+function OptimizerGrid({ params, converged }) {
   const normalized = params.length === 36
-    ? params.map(p => Math.abs(Math.sin(p)))   // map angle → [0,1] pulse intensity
+    ? params.map(p => Math.abs(Math.sin(p)))
     : Array(36).fill(0);
 
   return (
     <div style={panelStyle}>
-      <div style={labelStyle}>HEA Parameters — 36-node ansatz</div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(9, 1fr)", gap: 6 }}>
+      <div style={labelStyle}>Optimization Parameters</div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(9, 1fr)", gap: 8 }}>
         {normalized.map((intensity, i) => (
           <motion.div
             key={i}
             animate={converged
-              ? { scale: 1, opacity: 0.9, boxShadow: `0 0 8px ${C.green}66` }
+              ? { scale: 1, opacity: 0.8, background: C.green }
               : {
-                  scale:   [1, 1 + intensity * 0.25, 1],
-                  opacity: [0.35 + intensity * 0.55, 0.9, 0.35 + intensity * 0.55],
-                  boxShadow: [
-                    `0 0 4px ${C.blueDim}`,
-                    `0 0 ${6 + intensity * 14}px ${C.blue}`,
-                    `0 0 4px ${C.blueDim}`,
-                  ],
+                  scale:   [1, 1 + intensity * 0.15, 1],
+                  opacity: [0.2 + intensity * 0.6, 0.8, 0.2 + intensity * 0.6],
                 }
             }
             transition={converged
-              ? { duration: 0.6, ease: "easeOut" }
-              : { duration: 0.4 + intensity * 0.5, repeat: Infinity, ease: "easeInOut", delay: i * 0.018 }
+              ? { duration: 0.5, ease: "easeOut" }
+              : { duration: 0.8 + intensity * 0.6, repeat: Infinity, ease: "easeInOut", delay: i * 0.03 }
             }
             style={{
               width:        "100%",
               aspectRatio:  "1",
-              borderRadius: "50%",
-              background:   converged
-                ? `radial-gradient(circle, ${C.green}88, ${C.green}22)`
-                : `radial-gradient(circle, ${C.blue}${Math.round(55 + intensity * 150).toString(16).padStart(2,"0")}, ${C.blueDim}44)`,
-              border:       `1px solid ${converged ? C.green : C.blue}44`,
-              cursor:       "default",
+              borderRadius: "4px",
+              background:   C.accent,
             }}
           />
         ))}
       </div>
-      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 12, fontSize: 10, color: C.textDim, fontFamily: "monospace" }}>
-        <span>Init layer  (8 RY)</span>
-        <span>Entangle L1  (14 CZ·RY)</span>
-        <span>Entangle L2  (14 CZ·RY)</span>
+      <div style={{ display: "flex", justifyContent: "space-between", marginTop: 16, fontSize: 11, color: C.textDim, fontWeight: 500 }}>
+        <span>Layer 1 (Init)</span>
+        <span>Layer 2 (Entangle)</span>
+        <span>Layer 3 (Entangle)</span>
       </div>
     </div>
   );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Component C — QuantumState (bitstring bar chart + collapse animation)
+// Component 3 — MeasurementOutcomes
 // ─────────────────────────────────────────────────────────────────────────────
-function QuantumState({ running, converged }) {
+function MeasurementOutcomes({ running, converged }) {
   const [bars, setBars] = useState(() => BITSTRINGS.map(() => Math.random() * 0.3 + 0.05));
   const intervalRef = useRef(null);
 
@@ -161,49 +152,46 @@ function QuantumState({ running, converged }) {
     if (running && !converged) {
       intervalRef.current = setInterval(() => {
         setBars(BITSTRINGS.map(() => Math.random() * 0.85 + 0.05));
-      }, 120);
+      }, 80);
     } else {
       clearInterval(intervalRef.current);
       if (converged) {
-        // collapse: spike on |0101⟩ (index 1) — the HF reference state
-        setBars(BITSTRINGS.map((_, i) => (i === 1 ? 0.96 : Math.random() * 0.06)));
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setBars(BITSTRINGS.map((_, i) => (i === 1 ? 0.98 : Math.random() * 0.02)));
       }
     }
     return () => clearInterval(intervalRef.current);
   }, [running, converged]);
 
   const chartData = BITSTRINGS.map((label, i) => ({ label, amplitude: bars[i] }));
-  const barColor  = (entry) => entry.label === "|0101⟩" && converged ? C.green : C.blue;
+  const barColor  = (entry) => entry.label === "0101" && converged ? C.green : C.accent;
 
   return (
     <div style={panelStyle}>
-      <div style={labelStyle}>
-        Quantum State — Shot Distribution
+      <div style={{...labelStyle, display: "flex", justifyContent: "space-between", alignItems: "center"}}>
+        <span>Measurement Outcomes</span>
         {running && !converged && (
-          <span style={{ marginLeft: 10, color: C.orange, animation: "pulse 1s infinite" }}>
-            ● LIVE
+          <span style={{ color: C.textDim, animation: "pulse 1.5s infinite" }}>
+            Sampling...
           </span>
         )}
-        {converged && (
-          <span style={{ marginLeft: 10, color: C.green }}>✓ COLLAPSED</span>
-        )}
       </div>
-      <ResponsiveContainer width="100%" height={200}>
-        <BarChart data={chartData} margin={{ top: 4, right: 4, bottom: 28, left: -10 }}>
-          <CartesianGrid stroke={C.border} strokeDasharray="3 3" vertical={false} />
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart data={chartData} margin={{ top: 10, right: 0, bottom: 20, left: -20 }}>
           <XAxis dataKey="label" stroke={C.muted}
-                 tick={{ fill: C.textDim, fontSize: 8, fontFamily: "monospace" }}
-                 interval={0} angle={-55} textAnchor="end" />
-          <YAxis stroke={C.muted} tick={{ fill: C.textDim, fontSize: 9 }}
-                 domain={[0, 1]} tickFormatter={v => v.toFixed(1)} />
+                 tick={{ fill: C.textDim, fontSize: 10 }}
+                 interval={0} angle={-45} textAnchor="end" tickLine={false} axisLine={false} />
+          <YAxis stroke={C.muted} tick={{ fill: C.textDim, fontSize: 10 }}
+                 domain={[0, 1]} tickFormatter={v => v.toFixed(1)} tickLine={false} axisLine={false} />
           <Tooltip
-            contentStyle={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8 }}
-            labelStyle={{ color: C.blue, fontSize: 10, fontFamily: "monospace" }}
-            formatter={v => [v.toFixed(3), "Amplitude"]}
+            contentStyle={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6 }}
+            labelStyle={{ color: C.textStrong, fontSize: 11, fontWeight: 600 }}
+            formatter={v => [v.toFixed(3), "Probability"]}
+            cursor={{fill: C.bg}}
           />
-          <Bar dataKey="amplitude" radius={[3, 3, 0, 0]} isAnimationActive={false}>
+          <Bar dataKey="amplitude" radius={[2, 2, 0, 0]} isAnimationActive={converged ? true : false} animationDuration={800}>
             {chartData.map((entry, i) => (
-              <Cell key={i} fill={barColor(entry)} fillOpacity={converged && entry.label !== "|0101⟩" ? 0.25 : 0.85} />
+              <Cell key={i} fill={barColor(entry)} fillOpacity={converged && entry.label !== "0101" ? 0.1 : 0.8} />
             ))}
           </Bar>
         </BarChart>
@@ -218,18 +206,18 @@ function QuantumState({ running, converged }) {
 function StatusBar({ step, bestEnergy, patience, message }) {
   return (
     <div style={{
-      display: "flex", gap: 24, flexWrap: "wrap",
-      fontFamily: "monospace", fontSize: 11,
+      display: "flex", gap: 32, flexWrap: "wrap",
+      fontSize: 13, fontWeight: 500,
     }}>
       {[
-        ["STEP",    step ?? "—"],
-        ["BEST E",  bestEnergy != null ? bestEnergy.toFixed(6) + " Ha" : "—"],
-        ["PATIENCE",patience != null ? patience + " / 20" : "—"],
-        ["MSG",     message || "Waiting…"],
+        ["Optimization Step", step ?? "—"],
+        ["Best Energy",  bestEnergy != null ? bestEnergy.toFixed(6) + " Ha" : "—"],
+        ["Patience", patience != null ? patience + " / 20" : "—"],
+        ["Status", message || "Waiting…"],
       ].map(([k, v]) => (
-        <div key={k} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <span style={{ fontSize: 9, letterSpacing: "0.15em", color: C.textDim }}>{k}</span>
-          <span style={{ color: C.text }}>{v}</span>
+        <div key={k} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", color: C.textDim, letterSpacing: "0.05em" }}>{k}</span>
+          <span style={{ color: C.textStrong }}>{v}</span>
         </div>
       ))}
     </div>
@@ -237,10 +225,59 @@ function StatusBar({ step, bestEnergy, patience, message }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Launch screen
+// Launch screen (with Auto-Discover loop)
 // ─────────────────────────────────────────────────────────────────────────────
 function LaunchScreen({ onEngage }) {
   const [bondLength, setBondLength] = useState(0.96);
+  const [isSweeping, setIsSweeping] = useState(false);
+  const [pesData, setPesData] = useState([]);
+
+  const runSweep = async () => {
+    setIsSweeping(true);
+    setPesData([]);
+    const points = [0.5, 0.7, 0.9, 0.96, 1.1, 1.5, 2.0, 2.5];
+    for (const r of points) {
+      setBondLength(r);
+      try {
+        const res = await fetch(`${API}/run-vqe`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bond_length: r }),
+        });
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+        let energyFound = false;
+
+        while (!energyFound) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const events = buffer.split("\n\n");
+          buffer = events.pop();
+          for (const block of events) {
+            const line = block.replace(/^data: /, "").trim();
+            if (!line) continue;
+            try {
+              const pkt = JSON.parse(line);
+              if (pkt.step >= 0) {
+                setPesData(prev => [...prev, { r, energy: pkt.energy }]);
+                energyFound = true;
+                reader.cancel();
+                break;
+              }
+            } catch (err) {
+              console.error(err);
+            }
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    setBondLength(0.96);
+    setIsSweeping(false);
+  };
 
   return (
     <motion.div
@@ -253,90 +290,119 @@ function LaunchScreen({ onEngage }) {
         flexDirection:  "column",
         alignItems:     "center",
         justifyContent: "center",
-        gap:            40,
+        gap:            32,
         padding:        40,
         background:     C.bg,
+        fontFamily:     "Inter, system-ui, sans-serif",
       }}
     >
-      {/* Wordmark */}
-      <div style={{ textAlign: "center" }}>
+      <div style={{ textAlign: "center", maxWidth: 600 }}>
         <div style={{
-          fontFamily:    "'JetBrains Mono', monospace",
-          fontSize:      11,
-          letterSpacing: "0.35em",
-          color:         C.blue,
-          marginBottom:  14,
+          fontSize:      12,
+          fontWeight:    600,
+          letterSpacing: "0.15em",
+          color:         C.accent,
+          marginBottom:  16,
+          textTransform: "uppercase",
         }}>
-          VARIATIONAL QUANTUM EIGENSOLVER
+          Variational Quantum Eigensolver
         </div>
         <h1 style={{
           margin:        0,
-          fontSize:      "clamp(36px, 6vw, 68px)",
-          fontWeight:    700,
-          color:         C.text,
+          fontSize:      "clamp(32px, 5vw, 56px)",
+          fontWeight:    800,
+          color:         C.textStrong,
           letterSpacing: "-0.02em",
           lineHeight:    1.1,
         }}>
-          Ground State<br />
-          <span style={{
-            background:            `linear-gradient(90deg, ${C.blue}, ${C.orange})`,
-            WebkitBackgroundClip:  "text",
-            WebkitTextFillColor:   "transparent",
-          }}>
-            Energy Engine
-          </span>
+          Ground State Energy
         </h1>
-        <p style={{ marginTop: 16, color: C.textDim, fontSize: 14, maxWidth: 460 }}>
-          H₂O · 6-31G basis · Active space 4e/4o · ibm_kingston Digital Twin
+        <p style={{ marginTop: 24, color: C.textDim, fontSize: 16, lineHeight: 1.6 }}>
+          H₂O molecule simulation • 6-31G basis • Active space 4e/4o
         </p>
       </div>
 
-      {/* Slider */}
-      <div style={{ ...panelStyle, width: "100%", maxWidth: 420 }}>
-        <div style={{ ...labelStyle, marginBottom: 16 }}>O-H Bond Length</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+      <div style={{ ...panelStyle, width: "100%", maxWidth: 500 }}>
+        <div style={{ ...labelStyle, marginBottom: 24 }}>Molecular Geometry</div>
+
+        {/* PES Chart during sweep */}
+        {pesData.length > 0 && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 140 }} style={{ marginBottom: 24 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={pesData}>
+                <XAxis dataKey="r" type="number" domain={[0.5, 2.5]} hide />
+                <YAxis domain={['auto', 'auto']} hide />
+                <Line type="monotone" dataKey="energy" stroke={C.accent} strokeWidth={2} dot={{ r: 4, fill: C.surface, stroke: C.accent, strokeWidth: 2 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </motion.div>
+        )}
+
+        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <input
             type="range" min={0.5} max={3.0} step={0.01}
             value={bondLength}
             onChange={e => setBondLength(parseFloat(e.target.value))}
-            style={{ flex: 1, accentColor: C.blue, cursor: "pointer" }}
+            disabled={isSweeping}
+            style={{ flex: 1, accentColor: C.accent, cursor: isSweeping ? "default" : "pointer" }}
           />
           <span style={{
-            fontFamily: "monospace", fontSize: 20, fontWeight: 600,
-            color: C.blue, minWidth: 60, textAlign: "right",
+            fontSize: 24, fontWeight: 700,
+            color: C.textStrong, minWidth: 80, textAlign: "right",
           }}>
             {bondLength.toFixed(2)}
-            <span style={{ fontSize: 12, color: C.textDim, marginLeft: 3 }}>Å</span>
+            <span style={{ fontSize: 14, color: C.textDim, marginLeft: 4, fontWeight: 500 }}>Å</span>
           </span>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 9, color: C.muted, marginTop: 6, fontFamily: "monospace" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, color: C.muted, marginTop: 12, fontWeight: 500 }}>
           <span>0.50 Å</span>
-          <span>Equilibrium ≈ 0.96 Å</span>
+          <span>Equilibrium (0.96 Å)</span>
           <span>3.00 Å</span>
         </div>
       </div>
 
-      {/* CTA */}
-      <motion.button
-        whileHover={{ scale: 1.04, boxShadow: `0 0 40px ${C.blue}55` }}
-        whileTap={{ scale: 0.97 }}
-        onClick={() => onEngage(bondLength)}
-        style={{
-          background:    `linear-gradient(135deg, ${C.blueDim}, #0a2a45)`,
-          border:        `1.5px solid ${C.blue}`,
-          borderRadius:  10,
-          padding:       "16px 52px",
-          color:         C.blue,
-          fontSize:      15,
-          fontFamily:    "'JetBrains Mono', monospace",
-          fontWeight:    600,
-          letterSpacing: "0.12em",
-          cursor:        "pointer",
-          transition:    "box-shadow 0.2s",
-        }}
-      >
-        ENGAGE QPU
-      </motion.button>
+      <div style={{ display: "flex", gap: 16 }}>
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={() => onEngage(bondLength)}
+          disabled={isSweeping}
+          style={{
+            background:    C.accent,
+            border:        "none",
+            borderRadius:  8,
+            padding:       "16px 40px",
+            color:         C.surface,
+            fontSize:      15,
+            fontWeight:    600,
+            cursor:        isSweeping ? "default" : "pointer",
+            boxShadow:     "0 4px 6px -1px rgba(15, 118, 110, 0.2)",
+            opacity:       isSweeping ? 0.5 : 1,
+          }}
+        >
+          Simulate
+        </motion.button>
+
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={runSweep}
+          disabled={isSweeping}
+          style={{
+            background:    C.surface,
+            border:        `1px solid ${C.border}`,
+            borderRadius:  8,
+            padding:       "16px 32px",
+            color:         C.text,
+            fontSize:      15,
+            fontWeight:    600,
+            cursor:        isSweeping ? "default" : "pointer",
+            opacity:       isSweeping ? 0.5 : 1,
+          }}
+        >
+          Auto-Discover
+        </motion.button>
+      </div>
     </motion.div>
   );
 }
@@ -354,6 +420,10 @@ function Dashboard({ bondLength, onReset }) {
 
   const startStream = useCallback(() => {
     setRunning(true);
+    setHistory([]);
+    setParams(Array(36).fill(0));
+    setConverged(false);
+    setLatest({ step: null, bestEnergy: null, patience: null, message: "Connecting…" });
 
     esRef.current?.close();
 
@@ -393,7 +463,9 @@ function Dashboard({ bondLength, onReset }) {
                 setConverged(true);
                 setRunning(false);
               }
-            } catch (_) { /* malformed packet */ }
+            } catch (err) {
+              console.error("Malformed packet", err);
+            }
           }
           pump();
         });
@@ -403,8 +475,10 @@ function Dashboard({ bondLength, onReset }) {
   }, [bondLength]);
 
   useEffect(() => {
+    const es = esRef.current;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     startStream();
-    return () => esRef.current?.close();
+    return () => es?.close();
   }, [startStream]);
 
   return (
@@ -414,75 +488,68 @@ function Dashboard({ bondLength, onReset }) {
       style={{
         minHeight:  "100vh",
         background: C.bg,
-        padding:    "24px 28px",
+        padding:    "32px",
         boxSizing:  "border-box",
+        fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
-      {/* Header */}
       <div style={{
         display:        "flex",
         alignItems:     "center",
         justifyContent: "space-between",
-        marginBottom:   20,
+        marginBottom:   32,
         flexWrap:       "wrap",
-        gap:            12,
+        gap:            16,
       }}>
         <div>
           <div style={{
-            fontFamily:    "monospace",
-            fontSize:      10,
-            letterSpacing: "0.3em",
-            color:         C.blue,
-            marginBottom:  4,
+            fontSize:      11,
+            fontWeight:    600,
+            letterSpacing: "0.1em",
+            color:         C.textDim,
+            marginBottom:  6,
+            textTransform: "uppercase",
           }}>
-            VQE TELEMETRY — ibm_kingston Digital Twin
+            Simulation Telemetry
           </div>
-          <div style={{ color: C.text, fontSize: 18, fontWeight: 600, letterSpacing: "-0.01em" }}>
+          <div style={{ color: C.textStrong, fontSize: 24, fontWeight: 700, letterSpacing: "-0.01em" }}>
             H₂O · r(O-H) = {bondLength.toFixed(2)} Å
-            {converged && (
-              <motion.span
-                initial={{ opacity: 0, x: 8 }}
-                animate={{ opacity: 1, x: 0 }}
-                style={{ marginLeft: 14, fontSize: 13, color: C.green, fontWeight: 400 }}
-              >
-                Ground state locked
-              </motion.span>
-            )}
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 10 }}>
+        <div style={{ display: "flex", gap: 12 }}>
           {converged && (
             <motion.button
-              whileHover={{ scale: 1.04 }}
-              whileTap={{ scale: 0.96 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={startStream}
               style={{
                 background: C.surface, border: `1px solid ${C.border}`,
-                borderRadius: 8, padding: "8px 18px", color: C.textDim,
-                fontSize: 11, fontFamily: "monospace", cursor: "pointer",
+                borderRadius: 6, padding: "10px 20px", color: C.textStrong,
+                fontSize: 13, fontWeight: 600, cursor: "pointer",
+                boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
               }}
             >
-              RE-RUN
+              Re-run
             </motion.button>
           )}
           <motion.button
-            whileHover={{ scale: 1.04 }}
-            whileTap={{ scale: 0.96 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={onReset}
             style={{
               background: C.surface, border: `1px solid ${C.border}`,
-              borderRadius: 8, padding: "8px 18px", color: C.textDim,
-              fontSize: 11, fontFamily: "monospace", cursor: "pointer",
+              borderRadius: 6, padding: "10px 20px", color: C.textStrong,
+              fontSize: 13, fontWeight: 600, cursor: "pointer",
+              boxShadow: "0 1px 2px 0 rgb(0 0 0 / 0.05)",
             }}
           >
-            ← NEW RUN
+            ← New Simulation
           </motion.button>
         </div>
       </div>
 
-      {/* Status bar */}
-      <div style={{ ...panelStyle, marginBottom: 16 }}>
+      <div style={{ ...panelStyle, marginBottom: 24 }}>
         <StatusBar
           step={latest.step}
           bestEnergy={latest.bestEnergy}
@@ -491,53 +558,53 @@ function Dashboard({ bondLength, onReset }) {
         />
       </div>
 
-      {/* Main grid */}
       <div style={{
         display:             "grid",
         gridTemplateColumns: "1fr 1fr",
         gridTemplateRows:    "auto auto",
-        gap:                 16,
+        gap:                 24,
       }}>
-        {/* A — Descent trace (full width) */}
         <div style={{ gridColumn: "1 / -1" }}>
-          <DescentTrace data={history} converged={converged} />
+          <EnergyConvergence data={history} converged={converged} />
         </div>
-
-        {/* B — Parameter grid */}
-        <ParameterAnsatz params={params} converged={converged} />
-
-        {/* C — Quantum state */}
-        <QuantumState running={running} converged={converged} />
+        <OptimizerGrid params={params} converged={converged} />
+        <MeasurementOutcomes running={running} converged={converged} />
       </div>
 
-      {/* Running indicator */}
       <AnimatePresence>
         {running && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
             style={{
               position:   "fixed",
-              bottom:     20,
-              right:      24,
+              bottom:     32,
+              right:      32,
               background: C.surface,
-              border:     `1px solid ${C.orange}`,
-              borderRadius: 8,
-              padding:    "8px 16px",
-              fontFamily: "monospace",
-              fontSize:   11,
-              color:      C.orange,
+              border:     `1px solid ${C.border}`,
+              borderRadius: 24,
+              padding:    "10px 20px",
+              fontSize:   13,
+              fontWeight: 600,
+              color:      C.accent,
               display:    "flex",
               alignItems: "center",
-              gap:        8,
+              gap:        10,
+              boxShadow:  "0 4px 6px -1px rgb(0 0 0 / 0.1)",
             }}
           >
-            <motion.span
-              animate={{ opacity: [1, 0.3, 1] }}
-              transition={{ repeat: Infinity, duration: 1 }}
-            >●</motion.span>
-            QPU SAMPLING
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+              style={{
+                width: 14, height: 14,
+                border: `2px solid ${C.accentDim}`,
+                borderTopColor: C.accent,
+                borderRadius: "50%"
+              }}
+            />
+            Processing
           </motion.div>
         )}
       </AnimatePresence>
@@ -545,10 +612,10 @@ function Dashboard({ bondLength, onReset }) {
       <style>{`
         @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
         * { box-sizing: border-box; }
-        body { margin: 0; }
-        ::-webkit-scrollbar { width: 6px; }
+        body { margin: 0; background: ${C.bg}; }
+        ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: ${C.bg}; }
-        ::-webkit-scrollbar-thumb { background: ${C.border}; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb { background: ${C.muted}; border-radius: 4px; }
       `}</style>
     </motion.div>
   );
