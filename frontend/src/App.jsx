@@ -105,6 +105,7 @@ function EnergyConvergence({ data, converged, step }) {
             labelStyle={{ color: C.textDim, fontSize: 11 }}
             itemStyle={{ fontSize: 12, fontWeight: 500 }}
             formatter={(v, n) => [v.toFixed(6) + " Ha", n === "energy" ? "Current" : "Best"]}
+            itemSorter={(item) => (item.dataKey === "energy" ? -1 : 1)}
           />
           <ReferenceLine y={REFERENCE_E}
             stroke={C.muted} strokeDasharray="4 4" strokeWidth={1}
