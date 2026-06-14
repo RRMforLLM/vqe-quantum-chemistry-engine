@@ -72,13 +72,15 @@ class VQERequest(BaseModel):
 # Engine helpers (self-contained — no import from vqe_engine.py)
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _geometry(r: float) -> np.ndarray:
-    """Symmetric H2O geometry from bond length r (Å)."""
+def _geometry(r_angstrom: float) -> np.ndarray:
+    """Symmetric H2O geometry from bond length r in Angstroms, converted to Bohr."""
+    r_bohr = r_angstrom * 1.88973 
+    
     angle = math.radians(104.5 / 2)
     return np.array([
-        [-r * math.sin(angle),  r * math.cos(angle), 0.0],
-        [ 0.0,                   0.0,                 0.0],
-        [ r * math.sin(angle),   r * math.cos(angle), 0.0],
+        [-r_bohr * math.sin(angle),  r_bohr * math.cos(angle), 0.0],
+        [ 0.0,                        0.0,                      0.0],
+        [ r_bohr * math.sin(angle),   r_bohr * math.cos(angle), 0.0],
     ])
 
 

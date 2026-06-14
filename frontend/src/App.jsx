@@ -10,9 +10,9 @@ import {
 // Design tokens (Clean Academia)
 // ─────────────────────────────────────────────────────────────────────────────
 const C = {
-  bg:         "#f8fafc",    // light slate-50
+  bg:         "#ffffff",    // white
   surface:    "#ffffff",    // white
-  border:     "#e2e8f0",    // slate-200
+  border:     "#ffffff",    // slate-200
   accent:     "#0f766e",    // teal-700 (soft teal)
   accentDim:  "#ccfbf1",    // teal-50
   muted:      "#cbd5e1",    // slate-300
@@ -35,11 +35,7 @@ const API         = "http://localhost:8000";
 // Shared styles
 // ─────────────────────────────────────────────────────────────────────────────
 const panelStyle = {
-  background:   C.surface,
-  border:       `1px solid ${C.border}`,
-  borderRadius: 8,
   padding:      "24px",
-  boxShadow:    "0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05)",
 };
 
 const labelStyle = {
@@ -62,13 +58,13 @@ function EnergyConvergence({ data, converged }) {
     <div style={panelStyle}>
       <div style={labelStyle}>Energy Convergence vs Step</div>
       <ResponsiveContainer width="100%" height={260}>
-        <LineChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: -10 }}>
+        <LineChart data={chartData} margin={{ top: 10, right: 20, bottom: 20, left: -10 }}>
           <XAxis dataKey="step" stroke={C.muted} tick={{ fill: C.textDim, fontSize: 11 }} tickLine={false} axisLine={false}
                  label={{ value: "Step", position: "insideBottomRight", offset: -5, fill: C.textDim, fontSize: 11 }} />
           <YAxis stroke={C.muted} tick={{ fill: C.textDim, fontSize: 11 }} tickLine={false} axisLine={false}
                  tickFormatter={v => v.toFixed(3)} domain={["auto", "auto"]} />
           <Tooltip
-            contentStyle={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.05)" }}
+            contentStyle={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6}}
             labelStyle={{ color: C.textDim, fontSize: 11 }}
             itemStyle={{ fontSize: 12, fontWeight: 500 }}
             formatter={(v, n) => [v.toFixed(6) + " Ha", n === "energy" ? "Current" : "Best"]}
@@ -549,7 +545,7 @@ function Dashboard({ bondLength, onReset }) {
         </div>
       </div>
 
-      <div style={{ ...panelStyle, marginBottom: 24 }}>
+      <div style={{ paddingBottom: 24, borderBottom: `1px solid ${C.border}`, marginBottom: 24 }}>
         <StatusBar
           step={latest.step}
           bestEnergy={latest.bestEnergy}
