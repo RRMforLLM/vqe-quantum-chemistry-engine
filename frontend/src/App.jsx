@@ -49,9 +49,37 @@ const labelStyle = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// HamiltonianMapper
+// ─────────────────────────────────────────────────────────────────────────────
+function HamiltonianMapper() {
+  return (
+    <div style={{ ...panelStyle, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: 280 }}>
+      <div style={{ position: "relative", width: 120, height: 100 }}>
+        {/* Oxygen Node */}
+        <motion.div animate={{ scale: [1, 1.05, 1], opacity: [0.7, 1, 0.7] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", top: 10, left: 45, width: 30, height: 30, borderRadius: "50%", background: C.accent }} />
+        {/* Hydrogen Node 1 */}
+        <motion.div animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.3 }} style={{ position: "absolute", bottom: 10, left: 10, width: 20, height: 20, borderRadius: "50%", background: C.muted }} />
+        {/* Hydrogen Node 2 */}
+        <motion.div animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.6 }} style={{ position: "absolute", bottom: 10, right: 10, width: 20, height: 20, borderRadius: "50%", background: C.muted }} />
+        {/* Bonds */}
+        <svg style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: -1 }}>
+          <motion.line x1="60" y1="25" x2="20" y2="80" stroke={C.muted} strokeWidth="2" strokeDasharray="4" animate={{ strokeDashoffset: [20, 0] }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} />
+          <motion.line x1="60" y1="25" x2="100" y2="80" stroke={C.muted} strokeWidth="2" strokeDasharray="4" animate={{ strokeDashoffset: [20, 0] }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} />
+        </svg>
+      </div>
+      <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity }} style={{ marginTop: 24, fontSize: 12, fontWeight: 600, color: C.textDim, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+        Mapping Pauli-Word Basis...
+      </motion.div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Component 1 — EnergyConvergence
 // ─────────────────────────────────────────────────────────────────────────────
-function EnergyConvergence({ data, converged }) {
+function EnergyConvergence({ data, converged, step }) {
+  if (step != null && step < 0) return <HamiltonianMapper />;
+
   const chartData = data.map((d, i) => ({ step: i, energy: d.energy, best: d.best_energy }));
 
   return (
@@ -96,7 +124,8 @@ function EnergyConvergence({ data, converged }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Component 2 — OptimizerGrid
 // ─────────────────────────────────────────────────────────────────────────────
-function OptimizerGrid({ params, converged }) {
+function OptimizerGrid({ params, converged, step }) {
+  const isOptimizing = step != null && step >= 0 && !converged;
   const normalized = params.length === 36
     ? params.map(p => Math.abs(Math.sin(p)))
     : Array(36).fill(0);
@@ -110,14 +139,18 @@ function OptimizerGrid({ params, converged }) {
             key={i}
             animate={converged
               ? { scale: 1, opacity: 0.8, background: C.green }
-              : {
-                  scale:   [1, 1 + intensity * 0.15, 1],
-                  opacity: [0.2 + intensity * 0.6, 0.8, 0.2 + intensity * 0.6],
-                }
+              : isOptimizing
+                ? {
+                    scale:   [1, 1 + intensity * 0.15, 1],
+                    opacity: [0.2 + intensity * 0.6, 0.8, 0.2 + intensity * 0.6],
+                  }
+                : { scale: 1, opacity: 0.1 }
             }
             transition={converged
               ? { duration: 0.5, ease: "easeOut" }
-              : { duration: 0.8 + intensity * 0.6, repeat: Infinity, ease: "easeInOut", delay: i * 0.03 }
+              : isOptimizing
+                ? { duration: 0.8 + intensity * 0.6, repeat: Infinity, ease: "easeInOut", delay: i * 0.03 }
+                : { duration: 0 }
             }
             style={{
               width:        "100%",
@@ -140,12 +173,13 @@ function OptimizerGrid({ params, converged }) {
 // ─────────────────────────────────────────────────────────────────────────────
 // Component 3 — MeasurementOutcomes
 // ─────────────────────────────────────────────────────────────────────────────
-function MeasurementOutcomes({ running, converged }) {
+function MeasurementOutcomes({ converged, step }) {
+  const isOptimizing = step != null && step >= 0 && !converged;
   const [bars, setBars] = useState(() => BITSTRINGS.map(() => Math.random() * 0.3 + 0.05));
   const intervalRef = useRef(null);
 
   useEffect(() => {
-    if (running && !converged) {
+    if (isOptimizing) {
       intervalRef.current = setInterval(() => {
         setBars(BITSTRINGS.map(() => Math.random() * 0.85 + 0.05));
       }, 80);
@@ -154,10 +188,12 @@ function MeasurementOutcomes({ running, converged }) {
       if (converged) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setBars(BITSTRINGS.map((_, i) => (i === 1 ? 0.98 : Math.random() * 0.02)));
+      } else {
+        setBars(BITSTRINGS.map(() => 0.05));
       }
     }
     return () => clearInterval(intervalRef.current);
-  }, [running, converged]);
+  }, [isOptimizing, converged]);
 
   const chartData = BITSTRINGS.map((label, i) => ({ label, amplitude: bars[i] }));
   const barColor  = (entry) => entry.label === "0101" && converged ? C.green : C.accent;
@@ -166,7 +202,7 @@ function MeasurementOutcomes({ running, converged }) {
     <div style={panelStyle}>
       <div style={{...labelStyle, display: "flex", justifyContent: "space-between", alignItems: "center"}}>
         <span>Measurement Outcomes</span>
-        {running && !converged && (
+        {isOptimizing && (
           <span style={{ color: C.textDim, animation: "pulse 1.5s infinite" }}>
             Sampling...
           </span>
@@ -561,10 +597,10 @@ function Dashboard({ bondLength, onReset }) {
         gap:                 24,
       }}>
         <div style={{ gridColumn: "1 / -1" }}>
-          <EnergyConvergence data={history} converged={converged} />
+          <EnergyConvergence data={history} converged={converged} step={latest.step} />
         </div>
-        <OptimizerGrid params={params} converged={converged} />
-        <MeasurementOutcomes running={running} converged={converged} />
+        <OptimizerGrid params={params} converged={converged} step={latest.step} />
+        <MeasurementOutcomes running={running} converged={converged} step={latest.step} />
       </div>
 
       <AnimatePresence>
