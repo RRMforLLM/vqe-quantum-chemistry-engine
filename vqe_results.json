@@ -1,0 +1,7 @@
+{
+  "molecule": "H2O",
+  "backend": "ibm_kingston",
+  "equilibrium_bond_length_A": 1.9,
+  "final_energy_Ha": -75.97185662,
+  "steps_to_converge": 20
+}
