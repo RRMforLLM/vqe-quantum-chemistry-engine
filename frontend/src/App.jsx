@@ -10,16 +10,16 @@ import {
 // Design tokens (Clean Academia)
 // ─────────────────────────────────────────────────────────────────────────────
 const C = {
-  bg:         "#ffffff",    // white
-  surface:    "#ffffff",    // white
-  border:     "#ffffff",    // slate-200
-  accent:     "#0f766e",    // teal-700 (soft teal)
-  accentDim:  "#ccfbf1",    // teal-50
-  muted:      "#cbd5e1",    // slate-300
-  text:       "#334155",    // slate-700
-  textDim:    "#64748b",    // slate-500
-  textStrong: "#0f172a",    // slate-900
-  green:      "#059669",    // emerald-600
+  bg:         "#ffffff",
+  surface:    "#ffffff",
+  border:     "#e2e8f0",
+  accent:     "#0f766e",
+  accentDim:  "#ccfbf1",
+  muted:      "#cbd5e1",
+  text:       "#334155",
+  textDim:    "#64748b",
+  textStrong: "#0f172a",
+  green:      "#059669",
 };
 
 const BITSTRINGS = [
@@ -52,24 +52,33 @@ const labelStyle = {
 // HamiltonianMapper
 // ─────────────────────────────────────────────────────────────────────────────
 function HamiltonianMapper() {
+  const [matrix, setMatrix] = useState([]);
+
+  useEffect(() => {
+    const chars = ["I", "X", "Y", "Z"];
+    const generateTerm = () => Array.from({length: 8}, () => chars[Math.floor(Math.random() * 4)]).join(" ⊗ ");
+
+    const interval = setInterval(() => {
+      setMatrix(prev => [generateTerm(), ...prev].slice(0, 6));
+    }, 100);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div style={{ ...panelStyle, height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", minHeight: 280 }}>
-      <div style={{ position: "relative", width: 120, height: 100 }}>
-        {/* Oxygen Node */}
-        <motion.div animate={{ scale: [1, 1.05, 1], opacity: [0.7, 1, 0.7] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }} style={{ position: "absolute", top: 10, left: 45, width: 30, height: 30, borderRadius: "50%", background: C.accent }} />
-        {/* Hydrogen Node 1 */}
-        <motion.div animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.3 }} style={{ position: "absolute", bottom: 10, left: 10, width: 20, height: 20, borderRadius: "50%", background: C.muted }} />
-        {/* Hydrogen Node 2 */}
-        <motion.div animate={{ scale: [1, 1.1, 1], opacity: [0.5, 0.8, 0.5] }} transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.6 }} style={{ position: "absolute", bottom: 10, right: 10, width: 20, height: 20, borderRadius: "50%", background: C.muted }} />
-        {/* Bonds */}
-        <svg style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", zIndex: -1 }}>
-          <motion.line x1="60" y1="25" x2="20" y2="80" stroke={C.muted} strokeWidth="2" strokeDasharray="4" animate={{ strokeDashoffset: [20, 0] }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} />
-          <motion.line x1="60" y1="25" x2="100" y2="80" stroke={C.muted} strokeWidth="2" strokeDasharray="4" animate={{ strokeDashoffset: [20, 0] }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} />
-        </svg>
-      </div>
-      <motion.div animate={{ opacity: [0.4, 1, 0.4] }} transition={{ duration: 1.5, repeat: Infinity }} style={{ marginTop: 24, fontSize: 12, fontWeight: 600, color: C.textDim, letterSpacing: "0.1em", textTransform: "uppercase" }}>
-        Mapping Pauli-Word Basis...
-      </motion.div>
+    <div style={{ ...panelStyle, minHeight: 310, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", overflow: "hidden", background: "#f8fafc", border: `1px dashed ${C.border}`, borderRadius: 8 }}>
+        <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 14, color: C.textDim, textAlign: "center", marginBottom: 24 }}>
+           {matrix.map((term, i) => (
+              <div key={i} style={{ opacity: 1 - (i * 0.15), transform: `scale(${1 - i * 0.05})`, transition: "all 0.1s" }}>
+                {term}
+              </div>
+           ))}
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }} style={{ width: 16, height: 16, border: `2px solid ${C.accentDim}`, borderTopColor: C.accent, borderRadius: "50%" }} />
+            <div style={{ fontSize: 12, fontWeight: 600, color: C.accent, letterSpacing: "0.1em", textTransform: "uppercase" }}>
+               Compiling 193-Term Pauli Hamiltonian
+            </div>
+        </div>
     </div>
   );
 }
@@ -447,22 +456,26 @@ function Dashboard({ bondLength, onReset }) {
   const [params,     setParams]     = useState(Array(36).fill(0));
   const [converged,  setConverged]  = useState(false);
   const [running,    setRunning]    = useState(false);
-  const [latest,     setLatest]     = useState({ step: null, bestEnergy: null, patience: null, message: "Connecting…" });
-  const esRef = useRef(null);
+  const [latest,     setLatest]     = useState({ step: -1, bestEnergy: null, patience: null, message: "Connecting…" });
+  const abortRef = useRef(null);
 
   const startStream = useCallback(() => {
     setRunning(true);
     setHistory([]);
     setParams(Array(36).fill(0));
     setConverged(false);
-    setLatest({ step: null, bestEnergy: null, patience: null, message: "Connecting…" });
+    setLatest({ step: -1, bestEnergy: null, patience: null, message: "Connecting…" });
 
-    esRef.current?.close();
+    if (abortRef.current) {
+      abortRef.current.abort();
+    }
+    abortRef.current = new AbortController();
 
     fetch(`${API}/run-vqe`, {
       method:  "POST",
       headers: { "Content-Type": "application/json" },
       body:    JSON.stringify({ bond_length: bondLength }),
+      signal:  abortRef.current.signal,
     }).then(res => {
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -488,7 +501,7 @@ function Dashboard({ bondLength, onReset }) {
                 setParams(pkt.params ?? Array(36).fill(0));
                 setLatest({ step: pkt.step, bestEnergy: pkt.best_energy, patience: pkt.patience, message: pkt.message });
               } else {
-                setLatest(l => ({ ...l, message: pkt.message }));
+                setLatest(l => ({ ...l, step: pkt.step, message: pkt.message }));
               }
 
               if (pkt.status === "converged") {
@@ -503,14 +516,15 @@ function Dashboard({ bondLength, onReset }) {
         });
       }
       pump();
-    }).catch(() => setRunning(false));
+    }).catch((err) => {
+      if (err.name !== "AbortError") setRunning(false);
+    });
   }, [bondLength]);
 
   useEffect(() => {
-    const es = esRef.current;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     startStream();
-    return () => es?.close();
+    return () => abortRef.current?.abort();
   }, [startStream]);
 
   return (
