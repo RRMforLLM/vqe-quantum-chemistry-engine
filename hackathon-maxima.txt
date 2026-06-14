@@ -1,0 +1,41 @@
+Converge:
+- conocimiento
+- pasión
+- motivo
+
+Justenvs promocode: INNOVATHON100
+
+¿Por qué?
+¿Qué haciendo?
+¿Cómo?
+
+Hook
+Problema
+Solución
+Producto / Demo ( grabación de uso )
+Mercado
+Modelo de negocio
+Tracción / Validación
+Competencia ( quién está haciendo lo mismo en otra parte del mundo, y por qué propia solución es mejor )
+Equipo ( por qué ustedes )
+Cierre ( antojar trabajar con proyecto )
+
+5 pasos de tony para hacer un pitch
+1. orden de impacto ( lo más impactante de la solución va primero ) / hook ( arrebatar la atención ) / ¿mi abuela entiende? ( al juez no le importan los tecnicismos )
+2. hazlo tuyo ( si el juez no entiende tu proyecto, nada de lo que hiciste le importa )
+3. lenguaje corporal ( es tu turno, disfruta el momento )
+4. cierre y preguntas ( la gente se va recordando el final ) / los jueces son personas que quieren comprender el proyecto
+5. las slides ( minimalismo, queremos comunicar, no distraer )
+
+Draft:
+- Explain what YOUR problem is ( spending tons of time planning materials synthesis )
+- Show the algorithm
+- Recording of use ( along with a simultaneous explanation, talk on top )
+- Mention numbers ( market )
+- Mention validation ( numbers as well, surveys, interviews, etc. )
+- Acknowledge and brief alternative solutions - competitors ( and why your solution is better )
+- Mention yourself/why you should be chosen
+- And make them want to reach out afterwards, want to know more
+- Leverage future steps
+- Hint to frame it as the investigation project it is
+- Keep it in mortal terms
